@@ -1,0 +1,82 @@
+import static java.net.URLEncoder.encode;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+
+import java.net.URI;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.RequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+
+/**
+ * {@code ServiceTests} Provides service API unit tests
+ *
+ */
+
+@RunWith(SpringRunner.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT, classes = Application.class)
+public class ServiceTests {
+
+	@Autowired 
+	private WebApplicationContext ctx;
+
+	@MockBean
+	private AccountDAO accountDAO;
+
+	private MockMvc mockMvc;
+
+	@Before
+	public void setUp() {
+		mockMvc = MockMvcBuilders.webAppContextSetup(ctx).build();
+	}
+
+	@Test
+	@SuppressWarnings("unchecked")
+	public void test1() throws Exception {
+		Account accountData = new Account();
+		Account account = accountDAO.getDecisionTreeForAccount(
+				Mockito.anyString(), Mockito.anyCollection());
+		Mockito.when(account).thenReturn(accountData);
+		String inputData = "";
+		String expectedOutput = "";
+		MockHttpServletResponse httpResponse = executeGetforURIAndParamValue("just_uri", inputData);
+		assertEquals(expectedOutput, httpResponse.getContentAsString());
+	}
+
+	/**
+	 * Method to execute GET request for provided URI and query param value
+	 *
+	 * @param uriString
+	 *            represents URI to execute Http GET
+	 * @param paramValue
+	 *            value for URI query param
+	 * @return {@link MockHttpServletResponse} Http servlet response for request
+	 * @throws Exception
+	 *             when failed to execute request
+	 */
+	private MockHttpServletResponse executeGetforURIAndParamValue(
+			String uriString, String paramValue) throws Exception {
+		URI uri = new URI(uriString.concat(encode(paramValue, "UTF-8")));
+		RequestBuilder requestBuilder = MockMvcRequestBuilders.get(uri).accept(
+				"application/json");
+		MvcResult actions = mockMvc.perform(requestBuilder).andReturn();
+		return actions.getResponse();
+	}
+
+}
